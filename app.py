@@ -490,7 +490,7 @@ def render_revenue_guard(df: pd.DataFrame) -> None:
             return "background-color:#2A1F0A;color:#FFA040"
         return ""
 
-    styled = crit.style.applymap(_dtz_style, subset=["DTZ"])
+    styled = crit.style.map(_dtz_style, subset=["DTZ"])
     st.dataframe(styled, use_container_width=True, hide_index=True)
 
 
