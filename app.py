@@ -146,6 +146,18 @@ html, body, [class*="css"], [data-testid="stAppViewContainer"],
 hr {{ border-color:{BORDER}; margin:10px 0; }}
 a {{ color:{GOLD}; }}
 [data-testid="stDataFrame"] iframe {{ background:{BG2}; }}
+
+/* ── Sidebar collapse/expand button — suppress icon-name text fallback ── */
+[data-testid="stSidebarCollapseButton"] span,
+[data-testid="collapsedControl"] span {{
+    font-size:0 !important; visibility:hidden !important;
+}}
+[data-testid="stSidebarCollapseButton"] svg,
+[data-testid="collapsedControl"] svg {{
+    visibility:visible !important; opacity:0.5;
+}}
+[data-testid="stSidebarCollapseButton"]:hover svg,
+[data-testid="collapsedControl"]:hover svg {{ opacity:0.9; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -703,7 +715,8 @@ def render_sidebar(df: pd.DataFrame) -> None:
         # Scrollable chat history
         with st.container(height=220):
             for msg in st.session_state["messages"][-8:]:
-                with st.chat_message(msg["role"]):
+                av = "◆" if msg["role"] == "assistant" else "○"
+                with st.chat_message(msg["role"], avatar=av):
                     st.markdown(msg["content"])
 
         # Chat input — keep at sidebar level, not inside container
@@ -795,17 +808,22 @@ def render_overview(df: pd.DataFrame) -> None:
                 ),
                 customdata=sub[["sku_id","product_name"]].values,
             ))
-        fig.add_vline(x=vel_mid, line_dash="dash", line_color="#3A3A36", line_width=1)
-        fig.add_hline(y=mar_mid, line_dash="dash", line_color="#3A3A36", line_width=1)
-        x_max, y_max = df["daily_sales_velocity"].max(), df["profit_margin"].max()
-        for qx, qy, label, color in [
-            (x_max*0.82, y_max*0.93, "PUSH",     GREEN),
-            (x_max*0.08, y_max*0.93, "BUNDLE",   GOLD),
-            (x_max*0.82, y_max*0.04, "MONITOR",  BLUE),
-            (x_max*0.08, y_max*0.04, "DISCOUNT", RED),
+        fig.add_vline(x=vel_mid, line_dash="dash", line_color="#2E2E2A", line_width=1)
+        fig.add_hline(y=mar_mid, line_dash="dash", line_color="#2E2E2A", line_width=1)
+        # Use paper coordinates (0-1) so labels sit in corners, never overlapping dots
+        for ax, ay, anc_x, anc_y, label, color in [
+            (0.97, 0.97, "right", "top",    "PUSH",     GREEN),
+            (0.03, 0.97, "left",  "top",    "BUNDLE",   GOLD),
+            (0.97, 0.03, "right", "bottom", "MONITOR",  BLUE),
+            (0.03, 0.03, "left",  "bottom", "DISCOUNT", RED),
         ]:
-            fig.add_annotation(x=qx, y=qy, text=label, showarrow=False,
-                               font=dict(color=color, size=9, family="Montserrat"), opacity=0.45)
+            fig.add_annotation(
+                x=ax, y=ay, xref="paper", yref="paper",
+                text=label, showarrow=False,
+                xanchor=anc_x, yanchor=anc_y,
+                font=dict(color=color, size=9, family="Montserrat"),
+                opacity=0.55,
+            )
         layout = base_layout(340)
         layout["xaxis"]["title"] = "Sales Velocity (units/day)"
         layout["yaxis"]["title"] = "Profit Margin"
@@ -994,6 +1012,23 @@ def render_trends() -> None:
         f'Ray-Ban Meta v3 and Oakley Kato are commanding the largest budgets in Q2. '
         f'Ombraz Ridgeline Carbon launched April 2026 with 9x less spend — '
         f'organic and influencer channels are the lever.</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="background:{BG3};border:1px solid {BORDER};border-radius:8px;padding:10px 14px;">'
+        f'<span style="color:{MUTED};font-size:0.62rem;font-weight:700;text-transform:uppercase;'
+        f'letter-spacing:0.14em;">Data Sources + Demo Disclaimer &nbsp;·&nbsp; </span>'
+        f'<span style="color:{MUTED};font-size:0.72rem;line-height:1.6;">'
+        f'Competitor pricing: publicly available retail listings (Apr 2026). '
+        f'Market share estimates: Statista eyewear industry reports + Grand View Research. '
+        f'Search trends: indexed using Google Trends methodology (relative, not absolute). '
+        f'Ad spend index: estimated from SimilarWeb and social media monitoring tools. '
+        f'<span style="color:{GOLD};font-weight:600;">This dashboard uses synthetic demo data. </span>'
+        f'In production, these charts pull from your Shopify analytics, Google Trends API, '
+        f'and ad platform reporting endpoints for real, live figures.</span>'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
