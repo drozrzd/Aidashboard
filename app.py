@@ -715,8 +715,7 @@ def render_sidebar(df: pd.DataFrame) -> None:
         # Scrollable chat history
         with st.container(height=220):
             for msg in st.session_state["messages"][-8:]:
-                av = "◆" if msg["role"] == "assistant" else "○"
-                with st.chat_message(msg["role"], avatar=av):
+                with st.chat_message(msg["role"]):
                     st.markdown(msg["content"])
 
         # Chat input — keep at sidebar level, not inside container
