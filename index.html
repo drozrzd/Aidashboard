@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revenue Brain | Ombraz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #0E0E0D;
+    --bg2:     #161615;
+    --bg3:     #1C1C1A;
+    --border:  #232321;
+    --text:    #EDEAE0;
+    --muted:   #52524C;
+    --dim:     #848480;
+    --red:     #C43F3F;
+    --red-bg:  rgba(196,63,63,0.07);
+    --red-bd:  rgba(196,63,63,0.22);
+    --orange:  #C4783A;
+    --or-bg:   rgba(196,120,58,0.07);
+    --or-bd:   rgba(196,120,58,0.22);
+    --yellow:  #C9A040;
+    --ye-bg:   rgba(201,160,64,0.07);
+    --ye-bd:   rgba(201,160,64,0.22);
+    --green:   #3DA568;
+    --gr-bg:   rgba(61,165,104,0.07);
+    --gr-bd:   rgba(61,165,104,0.22);
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Montserrat', sans-serif;
+    min-height: 100vh;
+  }
+
+  .shell {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 32px 24px 72px;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .brand {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.22em;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .brand em { color: var(--yellow); font-style: normal; }
+
+  .brand-sub {
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  .header-meta { text-align: right; }
+
+  .meta-date {
+    font-size: 0.56rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 5px;
+  }
+
+  .live {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+
+  .live-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+  /* ===== LOADER ===== */
+  #loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    gap: 16px;
+  }
+
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--yellow);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loader-text {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ===== ERROR ===== */
+  #error-state {
+    display: none;
+    background: var(--red-bg);
+    border: 1px solid var(--red-bd);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .error-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--red);
+    margin-bottom: 8px;
+  }
+
+  .error-sub {
+    font-size: 0.64rem;
+    color: var(--dim);
+  }
+
+  /* ===== CONTENT ===== */
+  #content { display: none; }
+
+  /* ===== DO THIS FIRST ===== */
+  .do-first {
+    background: var(--red-bg);
+    border: 1px solid var(--red-bd);
+    border-left: 4px solid var(--red);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 10px;
+  }
+
+  .df-tag {
+    font-size: 0.48rem;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .df-tag::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: pulse 2s infinite;
+  }
+
+  .df-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+
+  .df-title .highlight { color: var(--red); }
+
+  .df-why {
+    font-size: 0.65rem;
+    color: var(--dim);
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .df-why b { color: var(--text); font-weight: 700; }
+
+  .df-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .impact-block { display: flex; align-items: baseline; gap: 7px; }
+
+  .impact-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  .impact-num.red    { color: var(--red); }
+  .impact-num.orange { color: var(--orange); }
+  .impact-num.yellow { color: var(--yellow); }
+  .impact-num.green  { color: var(--green); }
+
+  .impact-sub {
+    font-size: 0.53rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    line-height: 1.4;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    border: none;
+    white-space: nowrap;
+    transition: opacity 0.15s, transform 0.1s;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn:hover { opacity: 0.82; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-red    { background: var(--red);    color: #fff; }
+  .btn-orange { background: var(--orange); color: #fff; }
+  .btn-yellow { background: var(--yellow); color: #0E0E0D; }
+  .btn-green  { background: var(--green);  color: #fff; }
+
+  /* ===== FEED LABEL ===== */
+  .feed-label {
+    font-size: 0.48rem;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 18px 0 10px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  /* ===== FEED ITEM ===== */
+  .item {
+    border-radius: 10px;
+    border: 1px solid;
+    padding: 18px 20px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .item-red    { background: var(--red-bg);  border-color: var(--red-bd); }
+  .item-orange { background: var(--or-bg);   border-color: var(--or-bd); }
+  .item-yellow { background: var(--ye-bg);   border-color: var(--ye-bd); }
+  .item-green  { background: var(--gr-bg);   border-color: var(--gr-bd); }
+
+  .item-red::before    { background: var(--red); }
+  .item-orange::before { background: var(--orange); }
+  .item-yellow::before { background: var(--yellow); }
+  .item-green::before  { background: var(--green); }
+
+  .item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .item-left { flex: 1; min-width: 0; }
+
+  .item-rank {
+    font-size: 0.46rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .item-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.25;
+  }
+
+  .item-right { flex-shrink: 0; text-align: right; }
+
+  .item-impact-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.85rem;
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  .item-impact-label {
+    font-size: 0.46rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .item-why {
+    font-size: 0.63rem;
+    color: var(--dim);
+    line-height: 1.45;
+    margin-bottom: 12px;
+  }
+
+  .item-why b { color: var(--text); font-weight: 700; }
+
+  .item-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .item-action-text {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--dim);
+    flex: 1;
+    line-height: 1.4;
+  }
+
+  .item-action-text b { color: var(--text); font-weight: 700; }
+
+  .urgency-tag {
+    font-size: 0.5rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+
+  .urg-red    { background: rgba(196,63,63,0.12);  color: var(--red);    border: 1px solid rgba(196,63,63,0.22); }
+  .urg-orange { background: rgba(196,120,58,0.1);  color: var(--orange); border: 1px solid rgba(196,120,58,0.2); }
+  .urg-yellow { background: rgba(201,160,64,0.1);  color: var(--yellow); border: 1px solid rgba(201,160,64,0.2); }
+  .urg-green  { background: rgba(61,165,104,0.1);  color: var(--green);  border: 1px solid rgba(61,165,104,0.2); }
+
+  /* ===== FOOTER ===== */
+  .footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 0.52rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    line-height: 1.7;
+  }
+
+  .footer b { color: var(--dim); }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .refresh-btn:hover { border-color: var(--yellow); color: var(--yellow); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <div class="brand">REVENUE <em>BRAIN</em></div>
+      <div class="brand-sub">Ombraz &nbsp;·&nbsp; Decision Feed</div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-date" id="today-date"></div>
+      <div class="live"><span class="live-dot"></span>Live</div>
+    </div>
+  </header>
+
+  <!-- LOADER -->
+  <div id="loader">
+    <div class="spinner"></div>
+    <div class="loader-text">Loading decisions...</div>
+  </div>
+
+  <!-- ERROR -->
+  <div id="error-state">
+    <div class="error-title">Could not load data</div>
+    <div class="error-sub">Check your Supabase connection and try refreshing.</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- DO THIS FIRST -->
+    <div class="do-first" id="do-first-section">
+      <div class="df-tag">Do this first</div>
+      <div class="df-title" id="df-title"></div>
+      <div class="df-why" id="df-why"></div>
+      <div class="df-bottom">
+        <div class="impact-block">
+          <div class="impact-num red" id="df-impact"></div>
+          <div class="impact-sub" id="df-impact-label"></div>
+        </div>
+        <button class="btn btn-red" id="df-btn"></button>
+      </div>
+    </div>
+
+    <!-- FEED -->
+    <div class="feed-label">Next Best Actions &nbsp;·&nbsp; Ranked by impact</div>
+    <div id="feed"></div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      Based on <b>7-day rolling velocity</b> &amp; current margin data<br>
+      Last refreshed: <b id="refresh-time"></b>
+      <br>
+      <button class="refresh-btn" onclick="loadDecisions()">↻ &nbsp;Refresh</button>
+    </footer>
+
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://wovcoxkgndirlbawysed.supabase.co';
+const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvdmNveGtnbmRpcmxiYXd5c2VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NTczMzEsImV4cCI6MjA5MTIzMzMzMX0.yaqoYBwabNoP2eDp7OeWpGAEQfAKYre_cqv3XDyu59k';
+
+const DTZ_CRITICAL  = 7;   // days → red alert
+const DTZ_WARN      = 14;  // days → orange watch
+const MAX_FEED      = 5;   // feed items after DO THIS FIRST
+
+// Hardcoded behavioral revenue leaks (not in inventory data)
+const LEAKS = [
+  {
+    type: 'leak',
+    color: 'orange',
+    rankLabel: 'Monthly revenue leak',
+    title: 'Free shipping threshold is sending buyers away',
+    why: 'Your AOV is <b>$148</b> but free shipping starts at $200. That $52 gap is where ready-to-buy customers leave.',
+    impact: 11200,
+    impactLabel: 'lost / month',
+    action: '<b>Lower threshold to $149.</b> Or add "Add $52 more for free shipping" banner in cart.',
+    btnLabel: 'Fix It',
+    score: 11200
+  },
+  {
+    type: 'leak',
+    color: 'orange',
+    rankLabel: 'Decision friction',
+    title: 'Too many lens options → people give up',
+    why: 'You offer <b>7 lens variants</b> per frame. More than 3 options kills decisions. Customers open the dropdown and close the tab.',
+    impact: 8400,
+    impactLabel: 'lost / month',
+    action: '<b>Show 3 lens options max.</b> Lead with best-seller. Remove or hide the rest.',
+    btnLabel: 'Simplify',
+    score: 8400
+  }
+];
+
+// ─── SUPABASE ────────────────────────────────────────────────────────────────
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const fmt$ = (n) => '$' + Math.round(n).toLocaleString();
+
+function setDate() {
+  const d = new Date();
+  const opts = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' };
+  document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', opts);
+}
+
+function median(arr) {
+  const s = [...arr].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+// ─── DECISION ALGORITHM ──────────────────────────────────────────────────────
+function buildDecisions(skus) {
+  // Compute derived fields
+  skus.forEach(s => {
+    s.dtz             = s.daily_sales_velocity > 0
+                        ? s.current_stock / s.daily_sales_velocity
+                        : 9999;
+    s.revenue_at_risk = Math.round(s.daily_sales_velocity * s.selling_price * 14);
+    s.weekly_rev      = Math.round(s.daily_sales_velocity * s.selling_price * 7);
+  });
+
+  const medV = median(skus.map(s => s.daily_sales_velocity));
+  const medM = median(skus.map(s => s.profit_margin));
+  const avgV = skus.reduce((a, s) => a + s.daily_sales_velocity, 0) / skus.length;
+
+  const decisions = [];
+
+  // ── CRITICAL REORDERS (DTZ < 7) ──
+  const criticals = skus
+    .filter(s => s.dtz < DTZ_CRITICAL && s.daily_sales_velocity > 0)
+    .sort((a, b) => b.revenue_at_risk - a.revenue_at_risk);
+
+  criticals.forEach(s => {
+    const dtz = Math.ceil(s.dtz);
+    const margin = Math.round(s.profit_margin * 100);
+    decisions.push({
+      type: 'reorder',
+      color: 'red',
+      rankLabel: `Critical — ${dtz} days left`,
+      title: `Reorder ${s.product_name}`,
+      why: `Only <b>${dtz} days of stock left</b> at current sales rate. ${s.product_name} is running at ${margin}% margin. If it runs out, you lose revenue every day until it's back.`,
+      impact: s.revenue_at_risk,
+      impactLabel: 'at risk',
+      action: `<b>Contact your supplier today.</b> You have ${dtz} days. Every day you wait shrinks that window.`,
+      btnLabel: 'Reorder Now',
+      urgency: `${dtz} days left`,
+      urgencyClass: 'urg-red',
+      score: s.revenue_at_risk * 3
+    });
+  });
+
+  // ── WATCH REORDERS (DTZ 7–14) ──
+  const watches = skus
+    .filter(s => s.dtz >= DTZ_CRITICAL && s.dtz < DTZ_WARN && s.daily_sales_velocity > 0)
+    .sort((a, b) => a.dtz - b.dtz)
+    .slice(0, 1);
+
+  watches.forEach(s => {
+    const dtz = Math.ceil(s.dtz);
+    decisions.push({
+      type: 'reorder_watch',
+      color: 'orange',
+      rankLabel: `Reorder soon`,
+      title: `Schedule reorder for ${s.product_name}`,
+      why: `<b>${dtz} days of stock left.</b> Not critical today — but order this week or it becomes your next emergency.`,
+      impact: s.revenue_at_risk,
+      impactLabel: 'at risk if stockout',
+      action: `<b>Place order this week.</b> Lead time is typically 5–7 days. Don't let this become a fire.`,
+      btnLabel: 'Schedule Reorder',
+      urgency: `${dtz} days left`,
+      urgencyClass: 'urg-orange',
+      score: s.revenue_at_risk * 1.5
+    });
+  });
+
+  // ── PUSH (high velocity + high margin, not at risk) ──
+  const pushable = skus
+    .filter(s => s.daily_sales_velocity > medV && s.profit_margin > medM && s.dtz > DTZ_WARN)
+    .sort((a, b) => (b.daily_sales_velocity * b.profit_margin) - (a.daily_sales_velocity * a.profit_margin))
+    .slice(0, 1);
+
+  pushable.forEach(s => {
+    const mult = (s.daily_sales_velocity / avgV).toFixed(1);
+    const margin = Math.round(s.profit_margin * 100);
+    const upside = Math.round(s.daily_sales_velocity * s.selling_price * 7 * 0.5);
+    decisions.push({
+      type: 'push',
+      color: 'orange',
+      rankLabel: 'High velocity · High margin',
+      title: `Push ${s.product_name} harder`,
+      why: `Selling at <b>${mult}x the average velocity</b> with ${margin}% margin. Every ad dollar here compounds. This is your growth lever right now.`,
+      impact: upside,
+      impactLabel: 'upside / week',
+      action: `<b>Double your ad spend on this SKU.</b> It's already converting. Scale what works — don't spread budget evenly.`,
+      btnLabel: 'Increase Ads',
+      urgency: `${mult}x avg velocity`,
+      urgencyClass: 'urg-orange',
+      score: upside
+    });
+  });
+
+  // ── BUNDLE (low velocity + high margin) ──
+  const bundlable = skus
+    .filter(s => s.daily_sales_velocity < medV && s.profit_margin > medM)
+    .sort((a, b) => b.profit_margin - a.profit_margin)
+    .slice(0, 1);
+
+  if (bundlable.length && pushable.length) {
+    const b  = bundlable[0];
+    const p  = pushable[0];
+    const margin = Math.round(b.profit_margin * 100);
+    const aovLift = Math.round(b.selling_price * 0.4);
+    const weeklyGain = Math.round(aovLift * 10);
+    decisions.push({
+      type: 'bundle',
+      color: 'yellow',
+      rankLabel: 'AOV opportunity',
+      title: `Bundle ${b.product_name} with ${p.product_name}`,
+      why: `${b.product_name} has a <b>${margin}% margin</b> but barely moves on its own. Pair it with your top seller and let Zion carry it.`,
+      impact: aovLift,
+      impactLabel: 'AOV lift / order',
+      action: `<b>Create the bundle in your store today.</b> Name it. Price at combined minus 10%. Push it to your email list.`,
+      btnLabel: 'Create Bundle',
+      urgency: `${margin}% margin`,
+      urgencyClass: 'urg-yellow',
+      score: weeklyGain
+    });
+  }
+
+  // ── DISCOUNT (very low velocity + low margin) ──
+  const discountable = skus
+    .filter(s => s.daily_sales_velocity < medV * 0.25 && s.profit_margin < medM && s.current_stock > 10)
+    .sort((a, b) => (b.current_stock * b.unit_cost) - (a.current_stock * a.unit_cost))
+    .slice(0, 1);
+
+  discountable.forEach(s => {
+    const cashFreed = Math.round(s.current_stock * s.unit_cost * 0.9);
+    decisions.push({
+      type: 'discount',
+      color: 'green',
+      rankLabel: 'Dead inventory',
+      title: `Discount ${s.product_name} to free cash`,
+      why: `<b>${s.current_stock} units sitting</b> with almost no sales. This is dead capital that could fund your next reorder of Zion.`,
+      impact: cashFreed,
+      impactLabel: 'cash freed at 20% off',
+      action: `<b>Run 20% off this week.</b> If no movement in 7 days, pull the SKU entirely.`,
+      btnLabel: 'Discount 20%',
+      urgency: 'Dead inventory',
+      urgencyClass: 'urg-green',
+      score: cashFreed * 0.5
+    });
+  });
+
+  // ── MERGE LEAKS INTO DECISIONS ──
+  LEAKS.forEach(l => decisions.push(l));
+
+  // ── SORT BY SCORE ──
+  decisions.sort((a, b) => b.score - a.score);
+
+  return decisions;
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function renderDoFirst(d) {
+  document.getElementById('df-title').innerHTML =
+    `<span class="highlight">${d.title.split(' ').slice(0, 1).join(' ')}</span> ${d.title.split(' ').slice(1).join(' ')}`;
+  document.getElementById('df-why').innerHTML   = d.why;
+  document.getElementById('df-impact').textContent = fmt$(d.impact);
+  document.getElementById('df-impact-label').innerHTML = d.impactLabel.replace('/', '<br>');
+  document.getElementById('df-btn').textContent = d.btnLabel + ' →';
+
+  // Color the impact number correctly
+  const impactEl = document.getElementById('df-impact');
+  impactEl.className = 'impact-num ' + d.color;
+
+  // Color the do-first section border
+  const section = document.getElementById('do-first-section');
+  section.style.borderLeftColor = getColor(d.color);
+  section.style.borderColor = getBorderColor(d.color);
+  section.style.background = getBg(d.color);
+
+  const btn = document.getElementById('df-btn');
+  btn.className = 'btn btn-' + d.color;
+}
+
+function createFeedCard(d, rank) {
+  const colorVar   = getColor(d.color);
+  const el = document.createElement('div');
+  el.className = `item item-${d.color}`;
+
+  el.innerHTML = `
+    <div class="item-top">
+      <div class="item-left">
+        <div class="item-rank"># ${rank} &nbsp;·&nbsp; ${d.rankLabel}</div>
+        <div class="item-title">${d.title}</div>
+      </div>
+      <div class="item-right">
+        <div class="item-impact-num" style="color:${colorVar}">${fmt$(d.impact)}</div>
+        <div class="item-impact-label">${d.impactLabel}</div>
+      </div>
+    </div>
+    <div class="item-why">${d.why}</div>
+    <div class="item-action-row">
+      <div class="item-action-text">${d.action}</div>
+      ${d.urgency ? `<span class="urgency-tag urg-${d.color}">${d.urgency}</span>` : ''}
+    </div>
+    <div style="margin-top:14px;">
+      <button class="btn btn-${d.color}">${d.btnLabel} →</button>
+    </div>
+  `;
+
+  return el;
+}
+
+function getColor(c) {
+  const map = { red:'#C43F3F', orange:'#C4783A', yellow:'#C9A040', green:'#3DA568' };
+  return map[c] || '#C4783A';
+}
+
+function getBorderColor(c) {
+  const map = { red:'rgba(196,63,63,0.22)', orange:'rgba(196,120,58,0.22)', yellow:'rgba(201,160,64,0.22)', green:'rgba(61,165,104,0.22)' };
+  return map[c] || map.orange;
+}
+
+function getBg(c) {
+  const map = { red:'rgba(196,63,63,0.07)', orange:'rgba(196,120,58,0.07)', yellow:'rgba(201,160,64,0.07)', green:'rgba(61,165,104,0.07)' };
+  return map[c] || map.orange;
+}
+
+// ─── MAIN ────────────────────────────────────────────────────────────────────
+async function loadDecisions() {
+  // Show loader
+  document.getElementById('loader').style.display = 'flex';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('error-state').style.display = 'none';
+
+  try {
+    const { data: skus, error } = await db
+      .from('sku_inventory')
+      .select('*');
+
+    if (error) throw error;
+    if (!skus || skus.length === 0) throw new Error('No SKUs found');
+
+    const decisions = buildDecisions(skus);
+
+    if (decisions.length === 0) throw new Error('No decisions generated');
+
+    // DO THIS FIRST = highest scored item
+    const doFirst = decisions[0];
+    const feedItems = decisions.slice(1, 1 + MAX_FEED);
+
+    renderDoFirst(doFirst);
+
+    const feedEl = document.getElementById('feed');
+    feedEl.innerHTML = '';
+    feedItems.forEach((d, i) => feedEl.appendChild(createFeedCard(d, i + 1)));
+
+    document.getElementById('refresh-time').textContent =
+      new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+  } catch (err) {
+    console.error('Revenue Brain error:', err);
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('error-state').style.display = 'block';
+  }
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+setDate();
+loadDecisions();
+</script>
+</body>
+</html>
